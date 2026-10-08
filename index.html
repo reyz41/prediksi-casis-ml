@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Prediksi Penempatan Casis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <!-- Header dengan Tombol Download -->
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Input Nilai Ujian Casis</h4>
+                        <a href="/api/download" class="btn btn-success btn-sm">Unduh Database (Excel)</a>
+                    </div>
+                    <div class="card-body">
+                        <form id="formCasis">
+                            <div class="row">
+                                <div class="col-md-4 mb-3"><label>Nama Casis</label><input type="text" id="nama" class="form-control" required></div>
+                                <div class="col-md-4 mb-3"><label>Usia</label><input type="number" id="usia" class="form-control" required></div>
+                                <div class="col-md-4 mb-3"><label>Asal Wilayah</label><input type="text" id="asal_wilayah" class="form-control" required></div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-4 mb-3"><label>Lari 12' (meter)</label><input type="number" id="lari" class="form-control" required></div>
+                                <div class="col-md-4 mb-3"><label>Pull Up (kali)</label><input type="number" id="pull_up" class="form-control" required></div>
+                                <div class="col-md-4 mb-3"><label>Push Up (kali)</label><input type="number" id="push_up" class="form-control" required></div>
+                                <div class="col-md-4 mb-3"><label>Sit Up (kali)</label><input type="number" id="sit_up" class="form-control" required></div>
+                                <div class="col-md-4 mb-3"><label>Shuttle Run (detik)</label><input type="number" step="0.1" id="shuttle_run" class="form-control" required></div>
+                                <div class="col-md-4 mb-3"><label>Renang 25m (detik)</label><input type="number" step="0.1" id="renang" class="form-control" required></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mt-3 py-2 fw-bold">Prediksi Penempatan</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Kartu Hasil Prediksi -->
+                <div id="hasilCard" class="card mt-4 d-none shadow">
+                    <div class="card-body text-center" id="hasilContent">
+                        <h3 id="hasilNama"></h3>
+                        <h4 id="hasilStatus" class="fw-bold"></h4>
+                        <p id="hasilPenempatan" class="fs-5 mb-0"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('formCasis').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Ambil seluruh data dari form
+            const data = {
+                nama: document.getElementById('nama').value,
+                usia: parseInt(document.getElementById('usia').value),
+                asal_wilayah: document.getElementById('asal_wilayah').value,
+                lari: parseFloat(document.getElementById('lari').value),
+                pull_up: parseInt(document.getElementById('pull_up').value),
+                push_up: parseInt(document.getElementById('push_up').value),
+                sit_up: parseInt(document.getElementById('sit_up').value),
+                shuttle_run: parseFloat(document.getElementById('shuttle_run').value),
+                renang: parseFloat(document.getElementById('renang').value)
+            };
+
+            // Kirim ke backend
+            const response = await fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            
+            // Tampilkan hasil
+            const hasilCard = document.getElementById('hasilCard');
+            const hasilContent = document.getElementById('hasilContent');
+            
+            document.getElementById('hasilNama').innerText = "Casis: " + result.nama;
+            document.getElementById('hasilStatus').innerText = "Status: " + result.status;
+            document.getElementById('hasilPenempatan').innerText = "Penempatan: " + result.penempatan;
+            
+            hasilCard.classList.remove('d-none');
+            
+            if(result.status === 'LULUS') {
+                hasilContent.className = "card-body text-center bg-success text-white rounded";
+            } else {
+                hasilContent.className = "card-body text-center bg-danger text-white rounded";
+            }
+
+            // MEMBERSIHKAN FORM SECARA OTOMATIS
+            document.getElementById('formCasis').reset();
+            
+            // Opsional: Fokuskan kursor kembali ke kolom Nama untuk input selanjutnya
+            document.getElementById('nama').focus();
+        });
+    </script>
+</body>
+</html>
